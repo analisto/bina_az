@@ -1,3 +1,4 @@
+%%time
 import time
 import pandas as pd
 from selenium import webdriver
@@ -139,17 +140,18 @@ def extract_property_info(url):
 
     # Create a DataFrame with the extracted information
     data = {
-        'Phone Number': [phone_number],
-        'Owner Name': [owner_name],
-        'Owner Category': [owner_category],
-        'Category': [category],
-        'Floor': [floor],
-        'Area': [area],
-        'Room Count': [room_count],
-        'Description': [description],
-        'Mortgage': [mortgage],
-        'Price': [price],
-        'Currency': [currency]
+        'url': [url],
+        'phone Number': [phone_number],
+        'owner Name': [owner_name],
+        'owner Category': [owner_category],
+        'category': [category],
+        'floor': [floor],
+        'area': [area],
+        'room count': [room_count],
+        'description': [description],
+        'mortgage': [mortgage],
+        'price': [price],
+        'currency': [currency]
     }
     df = pd.DataFrame(data)
     return df
