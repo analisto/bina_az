@@ -91,6 +91,11 @@ def extract_mortgage(link_soup):
     else:
         return None
 
+
+    
+    
+# Last function    
+    
 def extract_property_info(url):
     # Chrome settings
     chrome_options = Options()
@@ -141,9 +146,9 @@ def extract_property_info(url):
     # Create a DataFrame with the extracted information
     data = {
         'url': [url],
-        'phone Number': [phone_number],
-        'owner Name': [owner_name],
-        'owner Category': [owner_category],
+        'phone number': [phone_number],
+        'owner name': [owner_name],
+        'owner category': [owner_category],
         'category': [category],
         'floor': [floor],
         'area': [area],
@@ -155,6 +160,8 @@ def extract_property_info(url):
     }
     df = pd.DataFrame(data)
     return df
+
+
 
 # Example usage:
 url = 'https://bina.az/items/3601047'
