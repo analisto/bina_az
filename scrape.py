@@ -7,6 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import re
+start_time = time.time()
 
 def extract_price(link_soup):
     try:
@@ -224,8 +225,10 @@ driver.quit()  # Close the WebDriver
 final_df = pd.concat(df_list, ignore_index=True)
 
 # Process the final_df as desired
-final_df
 
 final_df.to_csv("test.csv", sep=',', encoding='utf-8', header='true')
 final_df.to_parquet("test.parquet") 
 final_df.to_excel('test.xlsx', engine='xlsxwriter')
+end_time = time.time()
+execution_time = end_time - start_time
+print(f"Execution time: {execution_time} seconds")
