@@ -212,7 +212,7 @@ async def main():
                 df['page'] = page  # Add the 'page' column with the page number
                 df_list.append(df)
 
-        for page in range(2318, 2319):
+        for page in range(1, 100):
             print(f"Scraping page {page}...")
             url = f'https://bina.az/alqi-satqi?page={page}'
             driver = webdriver.Chrome(options=chrome_options)
@@ -231,7 +231,11 @@ async def main():
     final_df = pd.concat(df_list, ignore_index=True)
 
     # Process the final_df as desired
+    final_df.to_csv(r"final_df.csv", sep=',', encoding='utf-8', header='true')
+    final_df.to_parquet(r"final_df.parquet")
+    final_df.to_excel('final_df.xlsx', engine='xlsxwriter')
     print(final_df)
+
 
 # Run the main function
 start_time = time.time()
