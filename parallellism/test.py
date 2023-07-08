@@ -1,5 +1,6 @@
 import time
 import pandas as pd
+import asyncio
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
@@ -7,9 +8,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import re
-from flask import Flask, jsonify
+from concurrent.futures import ThreadPoolExecutor
 
-app = Flask(__name__)
 def extract_price(link_soup):
     try:
         price_div = link_soup.find('div', class_='product-price__i product-price__i--bold')
@@ -195,55 +195,48 @@ def extract_property_info(url, item_id):
     except Exception:
         return None
 
-@app.route('/api/properties', methods=['GET'])
-def get_properties():
-    start_time = time.time()
-
-    # Selenium settings
+async def main():
     chrome_options = Options()
-    chrome_options.add_argument('--headless')  # Run Chrome WebDriver in headless mode
-    driver = webdriver.Chrome(options=chrome_options)
+    chrome_options.add_argument('--headless')
 
     df_list = []  # List to store the dataframes
-    final_df = pd.DataFrame()  # Dataframe
 
-    for page in range(2318, 2319):
-        print(f"Scraping page {page}...")
-        url = f'https://bina.az/alqi-satqi?page={page}'
-        driver.get(url)
-        time.sleep(2)
+    with ThreadPoolExecutor() as executor:
+        loop = asyncio.get_event_loop()
 
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
-        content = soup.find_all('div', class_='items-i')
-
-        for item in content:
+        async def process_item(item):
             link = 'https://bina.az' + item.a['href']
             item_id = item['data-item-id']
-            df = extract_property_info(link, item_id)
-            if df is None:
-                continue
-            df['page'] = page  # Add the 'page' column with the page number
-            df_list.append(df)
+            df = await loop.run_in_executor(executor, extract_property_info, link, item_id)
+            if df is not None:
+                df['page'] = page  # Add the 'page' column with the page number
+                df_list.append(df)
 
-    driver.quit()  # Close the WebDriver
+        for page in range(2318, 2319):
+            print(f"Scraping page {page}...")
+            url = f'https://bina.az/alqi-satqi?page={page}'
+            driver = webdriver.Chrome(options=chrome_options)
+            driver.get(url)
+            time.sleep(2)
+
+            soup = BeautifulSoup(driver.page_source, 'html.parser')
+            content = soup.find_all('div', class_='items-i')
+
+            tasks = [process_item(item) for item in content]
+            await asyncio.gather(*tasks)
+
+            driver.quit()  # Close the WebDriver
 
     # Concatenate all dataframes in the list
     final_df = pd.concat(df_list, ignore_index=True)
 
     # Process the final_df as desired
+    print(final_df)
 
-    # final_df.to_csv("test.csv", sep=',', encoding='utf-8', header='true')
-    # final_df.to_parquet("test.parquet")
-    # final_df.to_excel('test.xlsx', engine='xlsxwriter')
-    end_time = time.time()
-    execution_time = end_time - start_time
-    print(f"Execution time: {execution_time} seconds")
-
-    # Convert the DataFrame to JSON
-    properties_json = final_df.to_json(orient='records')
-
-    # Return the JSON response
-    return jsonify(properties_json)
-
-if __name__ == '__main__':
-    app.run()
+# Run the main function
+start_time = time.time()
+loop = asyncio.get_event_loop()
+loop.run_until_complete(main())
+end_time = time.time()
+execution_time = end_time - start_time
+print(f"Execution time: {execution_time} seconds")
