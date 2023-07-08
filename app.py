@@ -232,9 +232,9 @@ def get_properties():
 
     # Process the final_df as desired
 
-    final_df.to_csv("test.csv", sep=',', encoding='utf-8', header='true')
-    final_df.to_parquet("test.parquet")
-    final_df.to_excel('test.xlsx', engine='xlsxwriter')
+    # final_df.to_csv("test.csv", sep=',', encoding='utf-8', header='true')
+    # final_df.to_parquet("test.parquet")
+    # final_df.to_excel('test.xlsx', engine='xlsxwriter')
     end_time = time.time()
     execution_time = end_time - start_time
     print(f"Execution time: {execution_time} seconds")

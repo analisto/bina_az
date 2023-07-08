@@ -7,12 +7,109 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import re
-import requests
-# Warnings
-from warnings import filterwarnings
-filterwarnings('ignore')
-import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+def extract_price(link_soup):
+    try:
+        price_div = link_soup.find('div', class_='product-price__i product-price__i--bold')
+        if price_div:
+            price_val = price_div.find('span', class_='price-val')
+            price_cur = price_div.find('span', class_='price-cur')
+            if price_val and price_cur:
+                price = re.sub(r'\s+', '', price_val.text.strip())  # Remove whitespace from the price value
+                currency = price_cur.text.strip()
+                return price, currency
+    except Exception:
+        pass
+    return None, None
+
+
+def extract_owner_category(link_soup):
+    try:
+        owner_category_div = link_soup.find('div', class_='product-owner__info-region')
+        if owner_category_div:
+            owner_category = owner_category_div.text.strip()
+            return owner_category
+    except Exception:
+        pass
+    return None
+
+
+def extract_owner_name(link_soup):
+    try:
+        owner_name_div = link_soup.find('div', class_='product-owner__info-name')
+        if owner_name_div:
+            owner_name = owner_name_div.text.strip()
+            return owner_name
+    except Exception:
+        pass
+    return None
+
+
+def extract_phone_number(link_soup):
+    try:
+        phone_number_div = link_soup.find('div', class_='product-phones__list-i')
+        phone_number_a = phone_number_div.find('a') if phone_number_div else None
+        phone_number = phone_number_a['href'].replace('tel:', '').replace('-', '').replace(' ', '') if phone_number_a else None
+        return phone_number
+    except Exception:
+        pass
+    return None
+
+
+def extract_category(link_soup):
+    try:
+        category_div = link_soup.find('div', class_='product-properties__i').find('span', class_='product-properties__i-value')
+        if category_div:
+            category = category_div.text.strip()
+            return category
+    except Exception:
+        pass
+    return None
+
+
+def extract_floor(link_soup):
+    try:
+        floor_div = link_soup.findAll('div', class_='product-properties__i')[1].find('span', class_='product-properties__i-value')
+        if floor_div:
+            floor = floor_div.text.strip()
+            return floor
+    except Exception:
+        pass
+    return None
+
+
+def extract_area(link_soup):
+    try:
+        area_div = link_soup.findAll('div', class_='product-properties__i')[2].find('span', class_='product-properties__i-value')
+        if area_div:
+            area = area_div.text.strip()
+            return area
+    except Exception:
+        pass
+    return None
+
+
+def extract_room_count(link_soup):
+    try:
+        room_count_div = link_soup.findAll('div', class_='product-properties__i')[3].find('span', class_='product-properties__i-value')
+        if room_count_div:
+            room_count = room_count_div.text.strip()
+            return room_count
+    except Exception:
+        pass
+    return None
+
+
+def extract_description(link_soup):
+    try:
+        description_div = link_soup.findAll('div', class_='product-properties__i')[4].find('span', class_='product-properties__i-value')
+        if description_div:
+            description = description_div.text.strip()
+            return description
+    except Exception:
+        pass
+    return None
+
 
 def extract_mortgage(link_soup):
     try:
@@ -26,9 +123,32 @@ def extract_mortgage(link_soup):
         pass
     return None
 
-def extract_property_info(url, page):
+
+def extract_property_info(url, item_id):
     try:
-        link_soup = BeautifulSoup(session.get(url, verify=False).text, 'html.parser')
+        # Chrome settings
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')  # Run Chrome WebDriver in headless mode
+        driver = webdriver.Chrome(options=chrome_options)
+
+        driver.get(url)
+        time.sleep(2)
+
+        # Wait for the phone number element to be present
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'product-phones__btn-value')))
+
+        # Find the element using XPath
+        element = driver.find_element(By.CLASS_NAME, 'product-phones__btn-value')
+        element.click()   # Click the button
+
+        # Wait for the updated phone number element to be present
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'product-phones__list-i')))
+
+        # Get the updated HTML after clicking the button
+        updated_html = driver.page_source
+
+        # Parse the updated HTML
+        link_soup = BeautifulSoup(updated_html, 'html.parser')
 
         # Extract the full phone number
         phone_number_a = link_soup.find('div', class_='product-phones__list-i').find('a')
@@ -49,9 +169,11 @@ def extract_property_info(url, page):
         mortgage = extract_mortgage(link_soup)
         price, currency = extract_price(link_soup)
 
+        driver.quit()  # Close the WebDriver
+
         # Create a DataFrame with the extracted information
         data = {
-            'page': [page],
+            'item_id': [item_id],
             'url': [url],
             'phone number': [phone_number],
             'owner name': [owner_name],
@@ -71,20 +193,14 @@ def extract_property_info(url, page):
     except Exception:
         return None
 
-
-# Selenium settings
 chrome_options = Options()
 chrome_options.add_argument('--headless')  # Run Chrome WebDriver in headless mode
 driver = webdriver.Chrome(options=chrome_options)
-
 df_list = []  # List to store the dataframes
-page = 1  # Initialize the page number
+final_df=pd.DataFrame() # Dataframe
 
-# Create a session object with SSL certificate verification disabled
-session = requests.Session()
-session.verify = False
-
-while True:
+for page in range(2318, 2319):
+    print(f"Scraping page {page}...")
     url = f'https://bina.az/alqi-satqi?page={page}'
     driver.get(url)
     time.sleep(2)
@@ -92,28 +208,27 @@ while True:
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     content = soup.find_all('div', class_='items-i')
 
-    if not content:
-        break  # No more content found on the page, stop scraping
-
     for item in content:
-        link = item.find('a')['href']
-        link_url = f'https://bina.az{link}'
-        link_soup = BeautifulSoup(session.get(link_url, verify=False).text, 'html.parser')
-
-        # Extract property information
-        df = extract_property_info(link_url, page)
-        if df is not None:
-            df_list.append(df)
-
-        print(f"Scraping page {page} - Property URL: {link_url}")
-        page += 1
+        link = 'https://bina.az' + item.a['href']
+        item_id = item['data-item-id']
+        df = extract_property_info(link, item_id)
+        if df is None:
+            continue
+        df['page'] = page  # Add the 'page' column with the page number
+        df_list.append(df)
 
 driver.quit()  # Close the WebDriver
 
-# Combine all the extracted dataframes into a single dataframe
+# Concatenate all dataframes in the list
 final_df = pd.concat(df_list, ignore_index=True)
 
-# Save the dataframe to a CSV file
-final_df.to_csv('property_data_2.csv', index=False)
-final_df.to_parquet(r"property_data_2.parquet") 
-print('Scraping complete!')
+# Process the final_df as desired
+print(final_df)
+# final_df.to_csv(r"final_df.csv", sep=',', encoding='utf-8', header='true')
+# final_df.to_parquet(r"final_df.parquet") 
+# final_df.to_excel('final_df.xlsx', engine='xlsxwriter')
+
+# start_time = time.time()
+# end_time = time.time()
+# execution_time = end_time - start_time
+# print(f"Execution time: {execution_time} seconds")
