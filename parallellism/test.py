@@ -212,7 +212,7 @@ async def main():
                 df['page'] = page  # Add the 'page' column with the page number
                 df_list.append(df)
 
-        for page in range(1, 100):
+        for page in range(1, 2323):
             print(f"Scraping page {page}...")
             url = f'https://bina.az/alqi-satqi?page={page}'
             driver = webdriver.Chrome(options=chrome_options)
@@ -238,6 +238,12 @@ async def main():
 
 
 # Run the main function
+# ===>>> 16:24 08.07.2023 Baku,Azerbaijan
+# ===>>> 08:51 09.07.2023 Baku,Azerbaijan
+
+# [26852 rows x 14 columns]
+# Execution time: 59161.54390025139 seconds
+
 start_time = time.time()
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
