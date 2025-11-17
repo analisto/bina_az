@@ -9,11 +9,12 @@ import aiohttp
 import json
 import csv
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Any
 from urllib.parse import urlencode
 import sys
 from pathlib import Path
+import time
 
 # Configure logging first
 logging.basicConfig(
@@ -62,6 +63,13 @@ class BinaScraper:
         self.semaphore = asyncio.Semaphore(self.MAX_CONCURRENT_REQUESTS)
         self.checkpoint_file = self.output_dir / "checkpoint.json"
         self.resume_enabled = resume
+
+        # Performance tracking
+        self.start_time: Optional[float] = None
+        self.resume_time: Optional[float] = None
+        self.page_times: List[float] = []  # Track time per page for ETA
+        self.last_progress_log: float = 0
+        self.progress_log_interval: int = 10  # Log detailed progress every N pages
 
     async def __aenter__(self):
         """Async context manager entry"""
@@ -236,6 +244,98 @@ class BinaScraper:
 
         return checkpoint.get('cursor'), checkpoint.get('page_num', 0), checkpoint.get('total_count', 0)
 
+    def format_time(self, seconds: float) -> str:
+        """Format seconds into human-readable time"""
+        if seconds < 60:
+            return f"{seconds:.0f}s"
+        elif seconds < 3600:
+            minutes = seconds / 60
+            return f"{minutes:.1f}m"
+        else:
+            hours = seconds / 3600
+            return f"{hours:.1f}h"
+
+    def format_time_detailed(self, seconds: float) -> str:
+        """Format seconds into detailed human-readable time"""
+        if seconds < 0:
+            return "calculating..."
+
+        hours, remainder = divmod(int(seconds), 3600)
+        minutes, secs = divmod(remainder, 60)
+
+        if hours > 0:
+            return f"{hours}h {minutes}m {secs}s"
+        elif minutes > 0:
+            return f"{minutes}m {secs}s"
+        else:
+            return f"{secs}s"
+
+    def calculate_eta(self, current_page: int, total_pages: int) -> tuple[float, float]:
+        """Calculate ETA and speed metrics"""
+        if not self.page_times or current_page == 0:
+            return 0, 0
+
+        # Use recent pages for more accurate estimation (last 20 pages)
+        recent_times = self.page_times[-20:] if len(self.page_times) > 20 else self.page_times
+        avg_time_per_page = sum(recent_times) / len(recent_times)
+
+        pages_remaining = total_pages - current_page
+        estimated_seconds = pages_remaining * avg_time_per_page
+
+        return estimated_seconds, avg_time_per_page
+
+    def log_progress(self, page_num: int, total_count: int, items_added: int, items_skipped: int, force: bool = False):
+        """Log detailed progress with performance metrics"""
+        current_time = time.time()
+
+        # Calculate total pages
+        total_pages = (total_count + self.ITEMS_PER_PAGE - 1) // self.ITEMS_PER_PAGE
+        pages_remaining = total_pages - page_num
+        progress_pct = (page_num / total_pages * 100) if total_pages > 0 else 0
+
+        # Log standard progress every page
+        logger.info(f"Page {page_num}/{total_pages}: +{items_added} items, {items_skipped} skipped | Total: {len(self.all_items)} / {total_count} ({progress_pct:.1f}%)")
+
+        # Log detailed progress every N pages or when forced
+        if force or (page_num % self.progress_log_interval == 0 and page_num > 0):
+            elapsed = current_time - self.start_time
+
+            # Calculate performance metrics
+            eta_seconds, avg_time_per_page = self.calculate_eta(page_num, total_pages)
+
+            if page_num > 0:
+                pages_per_minute = (page_num / elapsed) * 60
+                items_per_minute = (len(self.all_items) / elapsed) * 60
+            else:
+                pages_per_minute = 0
+                items_per_minute = 0
+
+            # Calculate ETA timestamp
+            if eta_seconds > 0:
+                eta_time = datetime.now() + timedelta(seconds=eta_seconds)
+                eta_str = eta_time.strftime('%H:%M:%S')
+            else:
+                eta_str = "calculating..."
+
+            # Log detailed progress
+            logger.info("=" * 80)
+            logger.info(f"📊 PROGRESS REPORT - Page {page_num}/{total_pages}")
+            logger.info("-" * 80)
+            logger.info(f"Progress:        [{progress_pct:5.1f}%] {page_num}/{total_pages} pages")
+            logger.info(f"Items scraped:   {len(self.all_items):,} / {total_count:,}")
+            logger.info(f"Pages remaining: {pages_remaining:,}")
+            logger.info(f"")
+            logger.info(f"⏱️  TIME METRICS")
+            logger.info(f"Elapsed time:    {self.format_time_detailed(elapsed)}")
+            logger.info(f"Time remaining:  {self.format_time_detailed(eta_seconds)}")
+            logger.info(f"ETA:             {eta_str}")
+            logger.info(f"")
+            logger.info(f"⚡ PERFORMANCE")
+            logger.info(f"Speed:           {pages_per_minute:.1f} pages/min")
+            logger.info(f"                 {items_per_minute:.1f} items/min")
+            logger.info(f"Avg per page:    {self.format_time(avg_time_per_page)}")
+            logger.info("=" * 80)
+
     async def fetch_page(self, cursor: Optional[str] = None, attempt: int = 1) -> Optional[Dict]:
         """Fetch a single page of results with retry logic"""
         async with self.semaphore:
@@ -271,11 +371,15 @@ class BinaScraper:
 
     async def scrape_all(self) -> List[Dict]:
         """Scrape all items with pagination and crash recovery"""
+        # Initialize start time
+        self.start_time = time.time()
+
         # Try to resume from checkpoint
         cursor, page_num, total_count = self.load_from_checkpoint()
 
         if cursor:
             logger.info(f"Resuming from checkpoint: page {page_num}, {len(self.all_items)} items already scraped")
+            self.resume_time = time.time()
         else:
             logger.info("Starting fresh scrape...")
             page_num = 0
@@ -283,8 +387,8 @@ class BinaScraper:
 
         try:
             while True:
+                page_start_time = time.time()
                 page_num += 1
-                logger.info(f"Fetching page {page_num}...")
 
                 data = await self.fetch_page(cursor)
 
@@ -337,7 +441,12 @@ class BinaScraper:
                         self.seen_ids.add(item_id)
                         items_added += 1
 
-                logger.info(f"Page {page_num}: +{items_added} items, {items_skipped} skipped | Total: {len(self.all_items)} / {total_count}")
+                # Track page time for ETA calculation
+                page_time = time.time() - page_start_time
+                self.page_times.append(page_time)
+
+                # Log progress with performance metrics
+                self.log_progress(page_num, total_count, items_added, items_skipped)
 
                 # Save checkpoint periodically
                 if page_num % self.CHECKPOINT_INTERVAL == 0:
@@ -379,8 +488,29 @@ class BinaScraper:
             # Final checkpoint and cleanup
             self.save_checkpoint(cursor, page_num, total_count)
 
-        logger.info(f"Scraping completed! Total items scraped: {len(self.all_items)}")
-        logger.info(f"Unique items: {len(self.seen_ids)}, Duplicates removed: {len(self.all_items) - len(self.seen_ids)}")
+        # Final performance summary
+        total_time = time.time() - self.start_time
+        total_pages = (total_count + self.ITEMS_PER_PAGE - 1) // self.ITEMS_PER_PAGE
+
+        logger.info("\n" + "=" * 80)
+        logger.info("🎉 SCRAPING COMPLETED!")
+        logger.info("=" * 80)
+        logger.info(f"Total items scraped:    {len(self.all_items):,}")
+        logger.info(f"Unique items:           {len(self.seen_ids):,}")
+        logger.info(f"Duplicates removed:     {len(self.all_items) - len(self.seen_ids):,}")
+        logger.info(f"Total pages processed:  {page_num:,} / {total_pages:,}")
+        logger.info(f"")
+        logger.info(f"⏱️  FINAL TIME METRICS")
+        logger.info(f"Total time:             {self.format_time_detailed(total_time)}")
+        logger.info(f"Average per page:       {self.format_time(total_time / page_num if page_num > 0 else 0)}")
+        logger.info(f"Average per item:       {self.format_time(total_time / len(self.all_items) if self.all_items else 0)}")
+        logger.info(f"")
+        logger.info(f"⚡ FINAL PERFORMANCE")
+        logger.info(f"Pages per minute:       {(page_num / total_time * 60):.1f}")
+        logger.info(f"Items per minute:       {(len(self.all_items) / total_time * 60):.1f}")
+        logger.info(f"Items per second:       {(len(self.all_items) / total_time):.2f}")
+        logger.info("=" * 80 + "\n")
+
         return self.all_items
 
     def save_to_json(self, filename: str = None):
