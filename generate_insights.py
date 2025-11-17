@@ -293,28 +293,68 @@ vip_prices = [item['price_value'] for item in baki_data
 regular_prices = [item['price_value'] for item in baki_data
                   if not item.get('vipped') and item.get('price_value')]
 
-fig, ax = plt.subplots(figsize=(12, 7))
-data_box = [regular_prices, vip_prices]
-bp = ax.boxplot(data_box, labels=['Regular Listings', 'VIP Listings'],
-                patch_artist=True, widths=0.6)
-
-# Color boxes
-colors = ['#A8DADC', '#E63946']
-for patch, color in zip(bp['boxes'], colors):
-    patch.set_facecolor(color)
-    patch.set_alpha(0.7)
-
-ax.set_ylabel('Price (AZN)', fontsize=13, fontweight='bold')
-ax.set_title('Price Distribution: VIP vs Regular Listings', fontsize=16, fontweight='bold', pad=20)
-ax.grid(axis='y', alpha=0.3)
-
-# Add statistics
+# Calculate statistics
 vip_avg = np.mean(vip_prices)
 regular_avg = np.mean(regular_prices)
-ax.text(1, vip_avg + 50000, f'Avg: {int(regular_avg):,} AZN',
-        ha='center', fontsize=11, fontweight='bold')
-ax.text(2, vip_avg + 50000, f'Avg: {int(vip_avg):,} AZN',
-        ha='center', fontsize=11, fontweight='bold')
+vip_median = np.median(vip_prices)
+regular_median = np.median(regular_prices)
+vip_count = len(vip_prices)
+regular_count = len(regular_prices)
+
+# Create comparison chart
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 7))
+
+# Left: Average and Median Prices
+categories = ['Regular\nListings', 'VIP\nListings']
+averages = [regular_avg, vip_avg]
+medians = [regular_median, vip_median]
+
+x = np.arange(len(categories))
+width = 0.35
+
+bars1 = ax1.bar(x - width/2, averages, width, label='Average Price',
+                color='#A8DADC', edgecolor='black', linewidth=1.5)
+bars2 = ax1.bar(x + width/2, medians, width, label='Median Price',
+                color='#E63946', edgecolor='black', linewidth=1.5)
+
+ax1.set_ylabel('Price (AZN)', fontsize=13, fontweight='bold')
+ax1.set_title('Price Comparison', fontsize=14, fontweight='bold', pad=15)
+ax1.set_xticks(x)
+ax1.set_xticklabels(categories, fontsize=12, fontweight='bold')
+ax1.legend(fontsize=11)
+ax1.grid(axis='y', alpha=0.3)
+
+# Add value labels
+for bars in [bars1, bars2]:
+    for bar in bars:
+        height = bar.get_height()
+        ax1.text(bar.get_x() + bar.get_width()/2., height,
+                f'{int(height):,}',
+                ha='center', va='bottom', fontsize=10, fontweight='bold')
+
+# Right: Number of Listings
+counts = [regular_count, vip_count]
+colors_right = ['#A8DADC', '#E63946']
+bars3 = ax2.bar(categories, counts, color=colors_right, edgecolor='black', linewidth=1.5)
+
+ax2.set_ylabel('Number of Listings', fontsize=13, fontweight='bold')
+ax2.set_title('Listing Volume', fontsize=14, fontweight='bold', pad=15)
+ax2.set_xticks(x)
+ax2.set_xticklabels(categories, fontsize=12, fontweight='bold')
+ax2.grid(axis='y', alpha=0.3)
+
+# Add value labels and percentages
+for bar, count in zip(bars3, counts):
+    height = bar.get_height()
+    percentage = (count / sum(counts)) * 100
+    ax2.text(bar.get_x() + bar.get_width()/2., height,
+            f'{count:,}\n({percentage:.1f}%)',
+            ha='center', va='bottom', fontsize=10, fontweight='bold')
+
+# Add premium calculation
+premium = ((vip_avg - regular_avg) / regular_avg) * 100
+plt.suptitle(f'VIP vs Regular Listings Analysis | VIP Premium: +{premium:.1f}%',
+             fontsize=16, fontweight='bold', y=1.00)
 
 plt.tight_layout()
 plt.savefig('charts/09_vip_vs_regular.png', dpi=300, bbox_inches='tight')
