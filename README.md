@@ -2,7 +2,6 @@
 
 > **Comprehensive analysis of 72,446 property listings across Azerbaijan**
 >
-> 
 > **Data collected: November 17, 2025**
 >
 > **Source: Bina.az**
@@ -224,15 +223,18 @@ This report provides deep insights into Azerbaijan's residential real estate mar
 
 ## 📁 Data Quality Report
 
-✅ **Dataset Completeness**: 93%
-✅ **Price Data**: 100% complete
-✅ **Location Data**: 94.2% complete
-✅ **Property Details**: 100% complete
-✅ **Photos Available**: 100% of listings
+- ✅ **Dataset Completeness**: 93%
+- ✅ **Price Data**: 100% complete
+- ✅ **Location Data**: 94.2% complete
+- ✅ **Property Details**: 100% complete
+- ✅ **Photos Available**: 100% of listings
 
 **Data Source**: Bina.az GraphQL API
+
 **Collection Date**: November 17, 2025
+
 **Properties Scraped**: 72,446
+
 **Data Integrity**: Zero duplicates, validated records only
 
 ---
@@ -253,7 +255,9 @@ All charts generated using Python (matplotlib, seaborn) with professional stylin
 ## 📞 About This Analysis
 
 **Purpose**: Strategic market intelligence for real estate investors, developers, and analysts
+
 **Coverage**: Comprehensive snapshot of Azerbaijan's residential property market
+
 **Frequency**: Point-in-time analysis (November 2025)
 
 ---
