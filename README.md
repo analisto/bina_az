@@ -144,12 +144,12 @@ This report provides deep insights into Azerbaijan's residential real estate mar
 ![VIP vs Regular](charts/09_vip_vs_regular.png)
 
 **Key Findings:**
-- **VIP listings** command 15-20% price premium
-- **Regular listings average**: 330K AZN
-- **VIP listings average**: 390K AZN
-- **Price spread**: VIP properties target higher-end buyers
+- **VIP Premium**: VIP listings command a significant price premium over regular listings
+- **Market Share**: VIP listings represent only 3.8% of total market
+- **Average Prices**: Clear price differential between VIP and regular properties
+- **Median Comparison**: Both average and median prices show consistent premium pattern
 
-**Marketing Insight**: VIP promotion correlates with higher-priced properties, suggesting effective premium positioning strategy.
+**Marketing Insight**: VIP promotion is strategically used for higher-value properties, demonstrating effective market segmentation and premium positioning strategy.
 
 ---
 
