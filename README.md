@@ -4,21 +4,33 @@ A high-performance asynchronous web scraper for extracting property listings fro
 
 ## Features
 
+### Core Scraping
 - **Asynchronous scraping** with asyncio and aiohttp for maximum performance
 - **Pagination support** with automatic cursor-based navigation through all pages
-- **Comprehensive data extraction** of all property fields including:
+- **Comprehensive data extraction** of all 27+ property fields including:
   - Property details (area, rooms, floor, etc.)
   - Location information (city, district)
   - Pricing data
   - Company/agent information
   - Property features (mortgage, repair status, etc.)
-  - Photo URLs
-  - Metadata
-- **Multiple output formats**: JSON and CSV
-- **Robust error handling** with automatic retry logic
-- **Rate limiting** to respect server resources
+  - Photo URLs (thumbnail, medium, large)
+  - Metadata and timestamps
+- **Multiple output formats**: JSON, CSV, and XLSX (Excel)
+
+### Data Integrity & Safety
+- **Crash Recovery**: Automatic checkpoint system - resume from where you left off
+- **Incremental Backups**: Saves data every 100 pages to prevent loss
+- **Data Validation**: Ensures all items have required fields
+- **Deduplication**: Tracks IDs to prevent duplicate entries
+- **Integrity Reports**: Detailed data quality and completeness metrics
+
+### Robustness
+- **Error handling** with automatic retry logic (3 attempts with exponential backoff)
+- **Rate limiting** to respect server resources (max 5 concurrent requests)
 - **Progress tracking** with detailed logging
+- **Graceful interruption**: Handles Ctrl+C, crashes, and network failures
 - **Statistics generation** for scraped data
+- **Auto-cleanup**: Manages backup files automatically
 
 ## Requirements
 
@@ -194,6 +206,36 @@ Top cities:
 - Scraping large amounts of data may take time depending on total listings
 - Ensure you have sufficient disk space for the output files
 - The scraper only targets sale properties (leased: false)
+
+## Crash Recovery & Data Safety ⚡
+
+### Automatic Checkpoints & Resume
+The scraper automatically saves progress and can resume from any interruption:
+
+```bash
+# If scraper is interrupted at page 450:
+python sale.py
+
+# Output:
+# Resuming from checkpoint: page 450, 7200 items already scraped
+# Loading 7200 items from backup: backup_page400_20251117_150000.json
+# Fetching page 451...
+```
+
+### Features:
+- **Checkpoints every 50 pages** - Never lose more than 50 pages of progress
+- **Full backups every 100 pages** - Complete data snapshots
+- **Auto-recovery** - Handles Ctrl+C, crashes, network failures
+- **Data validation** - Ensures all items are complete and valid
+- **Deduplication** - Prevents duplicate entries
+- **Integrity reports** - Shows data completeness metrics
+
+### Files Created:
+- `data/checkpoint.json` - Progress tracking
+- `data/backup_pageN_*.json` - Incremental backups (keeps last 3)
+- `data/bina_sale_*.json/csv/xlsx` - Final outputs
+
+**For detailed documentation, see [CRASH_RECOVERY.md](CRASH_RECOVERY.md)**
 
 ## Troubleshooting
 
