@@ -230,8 +230,8 @@ class BinaScraper:
         if not checkpoint:
             return None, 0, 0
 
-        # Look for the most recent backup file
-        backup_files = sorted(self.output_dir.glob("backup_page*.json"), reverse=True)
+        # Look for the most recent backup file (sort by modification time)
+        backup_files = sorted(self.output_dir.glob("backup_page*.json"), key=lambda x: x.stat().st_mtime, reverse=True)
         if backup_files:
             try:
                 with open(backup_files[0], 'r', encoding='utf-8') as f:
@@ -385,6 +385,9 @@ class BinaScraper:
             page_num = 0
             total_count = 0
 
+        consecutive_failures = 0
+        max_consecutive_failures = 5
+
         try:
             while True:
                 page_start_time = time.time()
@@ -392,11 +395,26 @@ class BinaScraper:
 
                 data = await self.fetch_page(cursor)
 
-                if not data or 'data' not in data:
-                    logger.error("Failed to fetch data or invalid response")
-                    # Save checkpoint before breaking
-                    self.save_checkpoint(cursor, page_num, total_count)
-                    break
+                if not data or 'data' not in data or data['data'] is None:
+                    consecutive_failures += 1
+                    logger.error(f"Failed to fetch data or invalid response (failure {consecutive_failures}/{max_consecutive_failures})")
+
+                    if consecutive_failures >= max_consecutive_failures:
+                        logger.error("Max consecutive failures reached. Stopping scraper.")
+                        self.save_checkpoint(cursor, page_num - 1, total_count)
+                        self.save_incremental(page_num - 1)
+                        break
+
+                    # Save checkpoint before retrying
+                    self.save_checkpoint(cursor, page_num - 1, total_count)
+                    page_num -= 1  # Don't increment page number on failure
+                    # Retry after delay
+                    logger.info(f"Retrying after {5 * consecutive_failures} seconds...")
+                    await asyncio.sleep(5 * consecutive_failures)
+                    continue
+
+                # Reset failure counter on success
+                consecutive_failures = 0
 
                 items_connection = data['data'].get('itemsConnection')
                 if not items_connection:
