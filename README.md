@@ -1,7 +1,9 @@
 # 🏢 Azerbaijan Real Estate Market Analysis 2025
 
-> **Comprehensive analysis of 72,446 property listings across Azerbaijan
-> Data collected: November 17, 2025**
+> **Comprehensive analysis of 72,446 property listings across Azerbaijan**
+>
+> 
+> **Data collected: November 17, 2025**
 >
 > **Source: Bina.az**
 
