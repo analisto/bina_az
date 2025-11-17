@@ -1,7 +1,9 @@
 # 🏢 Azerbaijan Real Estate Market Analysis 2025
 
-> **Comprehensive analysis of 72,446 property listings across Azerbaijan**
-> Data collected: November 17, 2025 | Source: Bina.az
+> **Comprehensive analysis of 72,446 property listings across Azerbaijan
+> Data collected: November 17, 2025**
+>
+> **Source: Bina.az**
 
 ---
 
@@ -26,6 +28,7 @@ This report provides deep insights into Azerbaijan's residential real estate mar
 ![Price by City](charts/01_price_by_city.png)
 
 **Key Findings:**
+
 - **Bakı leads** with the highest average property prices at 350K+ AZN
 - **Qəbələ and Şamaxı** emerge as premium resort destinations with prices above 300K AZN
 - **Regional cities** like Sumqayıt and Xırdalan offer more affordable options around 80-100K AZN
@@ -40,6 +43,7 @@ This report provides deep insights into Azerbaijan's residential real estate mar
 ![Top Locations](charts/02_top_locations_baki.png)
 
 **Key Findings:**
+
 - **Nəsimi district** dominates with 8,600+ active listings
 - **Nərimanov, Yasamal, and Xətai** form the core of Bakı's property market
 - **Top 5 districts** account for 40% of all Bakı listings
@@ -54,6 +58,7 @@ This report provides deep insights into Azerbaijan's residential real estate mar
 ![Price vs Area](charts/03_price_vs_area.png)
 
 **Key Findings:**
+
 - **Clear linear correlation** between property size and price
 - **Average price**: ~2,200 AZN per square meter
 - **Sweet spot**: 80-120 m² properties show optimal market activity
@@ -68,6 +73,7 @@ This report provides deep insights into Azerbaijan's residential real estate mar
 ![Room Distribution](charts/04_room_distribution.png)
 
 **Key Findings:**
+
 - **3-room apartments** are the market favorite (37.0%)
 - **2-room apartments** second choice (28.9%)
 - **1-room apartments** make up only 3.7% (limited supply)
@@ -82,6 +88,7 @@ This report provides deep insights into Azerbaijan's residential real estate mar
 ![Price by Rooms](charts/05_price_by_rooms.png)
 
 **Key Findings:**
+
 - **Linear price growth** from 1 to 5 rooms
 - **Average jump**: ~100K AZN per additional room
 - **1-room**: 140K AZN → **6-room**: 650K AZN
@@ -98,11 +105,13 @@ This report provides deep insights into Azerbaijan's residential real estate mar
 **Key Findings:**
 
 **Mortgage Availability:**
+
 - **40.1%** of properties support mortgage financing
 - **59.9%** require full cash payment
 - Mortgage access improving but still limited
 
 **Renovation Status:**
+
 - **86.9%** of properties are already renovated
 - **13.1%** need repair or renovation
 - Buyers strongly prefer move-in ready properties
@@ -116,6 +125,7 @@ This report provides deep insights into Azerbaijan's residential real estate mar
 ![Price Ranges](charts/07_price_ranges.png)
 
 **Key Findings:**
+
 - **100K-200K range** dominates the market (28,500 properties)
 - **Middle-class segment** (100K-300K) represents 60% of market
 - **Luxury segment** (500K+) accounts for 12% of listings
@@ -130,6 +140,7 @@ This report provides deep insights into Azerbaijan's residential real estate mar
 ![Top Agencies](charts/08_top_agencies.png)
 
 **Key Findings:**
+
 - **Market concentration**: Top 15 agencies control significant market share
 - **Leader agencies** maintain 400-600 active listings each
 - **"Əmlak ofisi"** leads with the most diverse portfolio
@@ -144,6 +155,7 @@ This report provides deep insights into Azerbaijan's residential real estate mar
 ![VIP vs Regular](charts/09_vip_vs_regular.png)
 
 **Key Findings:**
+
 - **VIP Premium**: VIP listings command a significant price premium over regular listings
 - **Market Share**: VIP listings represent only 3.8% of total market
 - **Average Prices**: Clear price differential between VIP and regular properties
@@ -158,6 +170,7 @@ This report provides deep insights into Azerbaijan's residential real estate mar
 ![Price per SQM](charts/10_price_per_sqm_location.png)
 
 **Key Findings:**
+
 - **Nəsimi** leads at 2,800+ AZN/m² (city center premium)
 - **Xətai and Yasamal** follow closely at 2,500+ AZN/m²
 - **Suburban districts** 40-50% cheaper per square meter
@@ -169,17 +182,17 @@ This report provides deep insights into Azerbaijan's residential real estate mar
 
 ## 📈 Market Statistics Summary
 
-| Metric | Value |
-|--------|-------|
-| **Total Properties Analyzed** | 72,446 |
-| **Cities Covered** | 83 |
-| **Average Price** | 340,450 AZN |
-| **Average Area** | 153.5 m² |
-| **Average Price/m²** | 2,217 AZN |
-| **Properties with Mortgage** | 37.4% |
-| **Renovated Properties** | 81.1% |
-| **Business Listings** | 71.1% |
-| **VIP Listings** | 3.8% |
+| Metric                              | Value       |
+| ----------------------------------- | ----------- |
+| **Total Properties Analyzed** | 72,446      |
+| **Cities Covered**            | 83          |
+| **Average Price**             | 340,450 AZN |
+| **Average Area**              | 153.5 m²   |
+| **Average Price/m²**         | 2,217 AZN   |
+| **Properties with Mortgage**  | 37.4%       |
+| **Renovated Properties**      | 81.1%       |
+| **Business Listings**         | 71.1%       |
+| **VIP Listings**              | 3.8%        |
 
 ---
 
@@ -225,6 +238,7 @@ This report provides deep insights into Azerbaijan's residential real estate mar
 ## 🔍 Methodology
 
 This analysis was conducted using:
+
 - **Automated data collection** via Bina.az API
 - **Statistical analysis** of 72,446 property listings
 - **Data validation** and quality checks
